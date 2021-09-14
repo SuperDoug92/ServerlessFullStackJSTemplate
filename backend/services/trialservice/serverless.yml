@@ -1,0 +1,39 @@
+org: superdoug
+app: serverlesstemplate
+service: trialservice
+
+frameworkVersion: "2"
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+
+functions:
+  trialfunction:
+    handler: src/functions/trialfunction.trialfunction
+    events:
+      - http:
+          method: get
+          cors: true
+          path: /v1/trialfunction
+          authorizer:
+            arn: arn:aws:lambda:us-east-1:789699194703:function:authorization-dev-auth
+            type: token
+
+plugins:
+  - serverless-mocha
+  - serverless-offline
+custom:
+  serverless-mocha-plugin:
+    testTemplate: templates/test-template.ejs
+    functionTemplate: templates/function-template.ejs
+
+package:
+  patterns:
+    - "!package-lock.json"
+    - "!templates/**"
+    - "!README.md"
+    # may want to remove test files - tbd

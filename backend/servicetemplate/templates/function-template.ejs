@@ -1,0 +1,67 @@
+'use strict';
+const scopeCheck = (event, required_scopes) => {
+  
+var returnobj = {
+    authorized: false,
+    message: undefined
+}
+
+if (!required_scopes){
+    returnobj.message = 'Unauthorized'
+    return returnobj
+}
+
+if (!event['requestContext']['authorizer']['scopes']){
+    returnobj.message = 'No scopes provided'
+    return returnobj
+}
+const provided_scopes = event['requestContext']['authorizer']['scopes']
+
+if (typeof required_scopes === 'string'){
+    if (provided_scopes.includes(required_scopes)){
+        returnobj.authorized = true
+        return returnobj
+    }else{
+        returnobj.message = 'Scope check failed for: ' + required_scopes
+        return returnobj
+    }
+}
+
+if (Array.isArray(required_scopes)){
+    provided_scopes = provided_scopes.split('|')
+    if (required_scopes.every(val => provided_scopes.includes(val))){
+            returnobj.authorized = true
+            return returnobj
+        }else{
+            returnobj.message = 'Scope check failed for: ' + required_scopes
+            return returnobj
+        }
+    }
+}
+
+module.exports.<%= handlerFunction %> = async (event, context) => {
+    const authObj = await scopeCheck(event, 'ADD SCOPES HERE')
+    const audience = event.requestContext.authorizer.audience.split('|')
+    const audienceCheck = (audience.includes('ADD AUDIENCE HERE') ? true : false);
+if (authObj.authorized && audienceCheck){
+    return {
+        statusCode: 200,
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Credentials': true,
+        },
+        body: JSON.stringify({
+            message: 'Trial function executed successfully!',
+            input: event
+        })
+    }
+    }else {
+        return {
+            statusCode: 403,
+            body: JSON.stringify({
+                message: authObj.message,
+                input: event
+            })
+        }
+    }
+}

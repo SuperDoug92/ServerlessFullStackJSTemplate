@@ -1,0 +1,42 @@
+org: superdoug
+app: serverlesstemplate
+service: authorization
+
+frameworkVersion: "2"
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  environment:
+    AUTH0_AUDIENCE: ${file(config.json):AUTH0_AUDIENCE}
+    AUTH0_CLIENT_PUBLIC_KEY: ${file(public_key.pem)}
+
+resources:
+  Resources:
+    GatewayResponseDefault4XX:
+      Type: "AWS::ApiGateway::GatewayResponse"
+      Properties:
+        ResponseParameters:
+          gatewayresponse.header.Access-Control-Allow-Origin: "'*'"
+          gatewayresponse.header.Access-Control-Allow-Headers: "'*'"
+        ResponseType: DEFAULT_4XX
+
+functions:
+  auth:
+    handler: src/functions/auth.auth
+
+plugins:
+  - serverless-mocha
+  - serverless-offline
+custom:
+  serverless-mocha-plugin:
+    testTemplate: templates/test-template.ejs
+    functionTemplate: templates/function-template.ejs
+package:
+  patterns:
+    - "!package-lock.json"
+    - "!templates/**"
+    - "!README.md"
